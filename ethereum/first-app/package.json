@@ -9,13 +9,15 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.4.1",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
+    "chai-as-promised": "^7.1.1",
+    "dotenv": "^10.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
-    "web-vitals": "^1.1.2"
+    "react-scripts": "4.0.3"
   },
   "devDependencies": {
     "truffle": "^5.4.24"
@@ -24,7 +26,15 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "environments": {
+      "globals": {
+        "artifacts": "readonly",
+        "contract": "readonly",
+        "assert": "readonly",
+        "web3": true
+      }
+    }
   },
   "browserslist": {
     "production": [
