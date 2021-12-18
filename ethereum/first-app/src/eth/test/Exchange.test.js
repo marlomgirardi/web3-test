@@ -5,7 +5,7 @@ const { tokens, INVALID_TOKEN, EXCHANGE_ETHER_ADDRESS, contractRevertError } = r
 const Exchange = artifacts.require("Exchange");
 const Token = artifacts.require("Token");
 
-contract("Exchange", function ([deployer, feeAccount, user1]) {
+contract("Exchange", function ([deployer, feeAccount, user1, user2]) {
   let exchange, token;
   const feePercent = 10;
 
@@ -182,6 +182,82 @@ contract("Exchange", function ([deployer, feeAccount, user1]) {
       await exchange.depositEther({ from: user1, value: tokens(1) });
       const balance = await exchange.balanceOf(EXCHANGE_ETHER_ADDRESS, user1);
       assert(balance, tokens(1));
+    });
+  });
+
+  describe("making orders", () => {
+    let result;
+
+    beforeEach(async () => {
+      result = await exchange.makeOrder(token.address, tokens(1), EXCHANGE_ETHER_ADDRESS, tokens(1), { from: user1 });
+    });
+
+    describe("success", () => {
+      it("tracks the newly created order", async () => {
+        const orderCount = (await exchange.orderCount()).toString();
+        assert(orderCount, 1);
+        const order = await exchange.orders(orderCount);
+
+        assert.equal(order.id.toString(), orderCount);
+        assert.equal(order.user, user1);
+        assert.equal(order.tokenGet, token.address);
+        assert.equal(order.amountGet.toString(), tokens(1).toString());
+        assert.equal(order.tokenGive, EXCHANGE_ETHER_ADDRESS);
+        assert.equal(order.amountGive.toString(), tokens(1).toString());
+        Number(order.timestamp).should.be.finite;
+      });
+    });
+
+    describe("failure", () => {});
+  });
+
+  describe("order actions", () => {
+    beforeEach(async () => {
+      await exchange.depositEther({ from: user1, value: tokens(1) });
+      await exchange.makeOrder(token.address, tokens(1), EXCHANGE_ETHER_ADDRESS, tokens(1), { from: user1 });
+    });
+
+    describe("cancelling orders", () => {
+      let result;
+
+      describe("success", () => {
+        beforeEach(async () => {
+          result = await exchange.cancelOrder(1, { from: user1 });
+        });
+
+        it("update cancelled orders", async () => {
+          const orderCancelled = await exchange.orderCancelled(1);
+          orderCancelled.should.be.equal(true);
+        });
+
+        it("emits a Cancel event", async () => {
+          const log = result.logs[0];
+          assert.equal(result.logs.length, 1);
+          assert.equal(log.event, "Cancel");
+          assert.equal(log.args.id.toString(), "1");
+          assert.equal(log.args.user, user1);
+          assert.equal(log.args.tokenGet, token.address);
+          assert.equal(log.args.amountGet.toString(), tokens(1).toString());
+          assert.equal(log.args.tokenGive, EXCHANGE_ETHER_ADDRESS);
+          assert.equal(log.args.amountGive.toString(), tokens(1).toString());
+          Number(log.args.timestamp).should.be.finite;
+        });
+      });
+
+      describe("failure", () => {
+        it("rejects invalid order ids", async () => {
+          const invalidOrderId = 99999;
+          await exchange
+            .cancelOrder(invalidOrderId, { from: user1 })
+            .should.be.rejectedWith(contractRevertError("Cannot cancel order that does not exist"));
+        });
+
+        it("rejects unauthorized cancelations", async () => {
+          await exchange
+            .cancelOrder(1, { from: user2 })
+            .should.be.rejectedWith(contractRevertError("Cannot cancel order that is not yours"));
+        });
+      });
     });
   });
 });
