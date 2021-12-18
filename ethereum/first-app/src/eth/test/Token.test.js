@@ -1,6 +1,6 @@
 require("chai").use(require("chai-as-promised")).should();
 
-const { tokens } = require("./helpers");
+const { tokens, INVALID_TOKEN } = require("./helpers");
 
 const Token = artifacts.require("Token");
 
@@ -75,21 +75,10 @@ contract("Token", function ([deployer, receiver, exchange]) {
           .should.be.rejectedWith("Not enough balance");
       });
 
-      // it("rejects invalid recipient", async () => {
-      //   await token.transfer(0x0, tokens(1), { from: deployer }).should.be.rejectedWith("Invalid address");
-      // });
+      it("rejects invalid recipient", async () => {
+        await token.transfer(INVALID_TOKEN, tokens(1), { from: deployer }).should.be.rejectedWith("Invalid address");
+      });
     });
-
-    // it("rejects invalid transfers", async () => {
-    //   let err;
-    //   try {
-    //     await token.transfer(0x0, 1);
-    //   } catch (e) {
-    //     err = e;
-    //   }
-    //   assert.ok(err instanceof Error);
-    //   assert.equal(err.reason, "invalid address");
-    // });
   });
 
   describe("approvals", async () => {
@@ -116,11 +105,11 @@ contract("Token", function ([deployer, receiver, exchange]) {
       });
     });
 
-    // describe("failure", () => {
-    //   it("rejects invalid transfers", async () => {
-    //     await token.approve(0x0, tokens(1), { from: deployer }).should.be.rejectedWith("Invalid address");
-    //   });
-    // });
+    describe("failure", () => {
+      it("rejects invalid transfers", async () => {
+        await token.approve(INVALID_TOKEN, tokens(1), { from: deployer }).should.be.rejectedWith("Invalid address");
+      });
+    });
   });
 
   describe("delegated transfer tokens", async () => {
@@ -172,11 +161,14 @@ contract("Token", function ([deployer, receiver, exchange]) {
           .should.be.rejectedWith("Not enough balance");
       });
 
-      // it("rejects invalid recipient", async () => {
-      //   await token
-      //     .transferFrom(deployer, 0x0, tokens(1), { from: exchange })
-      //     .should.be.rejectedWith("Invalid address");
-      // });
+      it("rejects invalid recipient", async () => {
+        await token.approve(exchange, tokens(1), { from: deployer });
+        await token
+          .transferFrom(deployer, INVALID_TOKEN, tokens(1), { from: exchange })
+          .should.be.rejectedWith(
+            "Returned error: VM Exception while processing transaction: revert Invalid address -- Reason given: Invalid address."
+          );
+      });
     });
   });
 });

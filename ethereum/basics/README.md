@@ -18,3 +18,39 @@ I'm now grouping some base information to start digging deeper into this.
 - [ ] [Truffle](https://www.trufflesuite.com/truffle) for testing.
 - [ ] [Infura](https://infura.io/) development suite
 - [ ] [WalletConnect](https://walletconnect.com/) an alternative to web3js compatible with multiple blockchains
+
+
+## Solidity
+
+The first two lines are the license and the solidity version used.
+
+```js
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.10;
+```
+
+After that you have a class-like contract:
+
+```js
+contract ContractName {
+  constructor() public {
+    // ...
+  }
+}
+```
+
+### Most used [types](https://docs.soliditylang.org/en/v0.8.10/types.htmls)
+
+- `string` string as we know it
+- `uint256` for unassigned integers, which means, only positive numbers.
+- `address` to hold the address identifier.
+
+## [Global variables](https://docs.soliditylang.org/en/v0.8.10/units-and-global-variables.html#special-variables-and-functions)
+
+### `msg`
+
+- `msg.sender` - sender of the message (current call).
+
+## Security
+
+One of the libraries that already have proven utilities is `@openzeppelin/contracts`.

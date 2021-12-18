@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+// vs code extension limitation on monorepos, don't care for now as I'm learning solidity
+import "../../../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * Testing solidity
@@ -24,14 +25,13 @@ contract Token {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  constructor() public {
+  constructor() {
     totalSupply = 1000000 * (10 ** decimals);
     balanceOf[msg.sender] = totalSupply ;
   }
 
   function _transfer(address _from, address _to, uint256 _value) internal {
-    // require(_to != address(0), "Invalid address"); // checked by solidity itself?
-
+    require(_to != address(0), "Invalid address");
     balanceOf[_from] = balanceOf[_from].sub(_value);
     balanceOf[_to] = balanceOf[_to].add(_value);
     emit Transfer(_from, _to, _value);
@@ -52,6 +52,7 @@ contract Token {
   }
 
   function approve(address _spender, uint256 _value) public returns (bool success) {
+    require(_spender != address(0), "Invalid address");
     allowance[msg.sender][_spender] = _value;
     emit Approval(msg.sender, _spender, _value);
     return true;
