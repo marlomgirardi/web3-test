@@ -1,6 +1,6 @@
 require("chai").use(require("chai-as-promised")).should();
 
-const { tokens, INVALID_TOKEN } = require("./helpers");
+const { tokens, INVALID_TOKEN, contractRevertError } = require("./helpers");
 
 const Token = artifacts.require("Token");
 
@@ -165,9 +165,7 @@ contract("Token", function ([deployer, receiver, exchange]) {
         await token.approve(exchange, tokens(1), { from: deployer });
         await token
           .transferFrom(deployer, INVALID_TOKEN, tokens(1), { from: exchange })
-          .should.be.rejectedWith(
-            "Returned error: VM Exception while processing transaction: revert Invalid address -- Reason given: Invalid address."
-          );
+          .should.be.rejectedWith(contractRevertError("Invalid address"));
       });
     });
   });
