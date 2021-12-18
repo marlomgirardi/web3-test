@@ -214,7 +214,52 @@ contract("Exchange", function ([deployer, feeAccount, user1, user2]) {
   describe("order actions", () => {
     beforeEach(async () => {
       await exchange.depositEther({ from: user1, value: tokens(1) });
+      await token.transfer(user2, tokens(100), { from: deployer });
+      await token.approve(exchange.address, tokens(2), { from: user2 });
+      await exchange.depositToken(token.address, tokens(2), { from: user2 });
       await exchange.makeOrder(token.address, tokens(1), EXCHANGE_ETHER_ADDRESS, tokens(1), { from: user1 });
+    });
+
+    describe.only("filling orders", () => {
+      let result;
+
+      describe("success", () => {
+        beforeEach(async () => {
+          result = await exchange.fillOrder(1, { from: user2 });
+        });
+
+        it("executes the trade & charges fees", async () => {
+          let balance = await exchange.balanceOf(token.address, user1);
+          balance.toString().should.equal(tokens(1).toString());
+          balance = await exchange.balanceOf(EXCHANGE_ETHER_ADDRESS, user2);
+          balance.toString().should.equal(tokens(1).toString());
+          balance = await exchange.balanceOf(EXCHANGE_ETHER_ADDRESS, user1);
+          balance.toString().should.equal(tokens(0).toString());
+          balance = await exchange.balanceOf(token.address, user2);
+          balance.toString().should.equal(tokens(0.9).toString());
+          const feeAccount = await exchange.feeAccount();
+          balance = await exchange.balanceOf(token.address, feeAccount);
+          balance.toString().should.equal(tokens(0.1).toString());
+        });
+
+        it("updates filled orders", async () => {
+          const orderFilled = await exchange.orderFilled(1);
+          orderFilled.should.be.equal(true);
+        });
+
+        it("emits a Trade event", async () => {
+          const log = result.logs[0];
+          assert.equal(result.logs.length, 1);
+          assert.equal(log.event, "Trade");
+          assert.equal(log.args.orderId.toString(), "1");
+          assert.equal(log.args.user, user1);
+          assert.equal(log.args.tokenGet, token.address);
+          assert.equal(log.args.amountGet.toString(), tokens(1).toString());
+          assert.equal(log.args.tokenGive, EXCHANGE_ETHER_ADDRESS);
+          assert.equal(log.args.amountGive.toString(), tokens(1).toString());
+          Number(log.args.timestamp).should.be.finite;
+        });
+      });
     });
 
     describe("cancelling orders", () => {

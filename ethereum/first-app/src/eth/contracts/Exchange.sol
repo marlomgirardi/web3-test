@@ -6,6 +6,18 @@ import "../../../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./Token.sol";
 
+// TODO:
+// [X] Set the fee account
+// [X] Deposit Ether
+// [X Withdraw Ether
+// [X] Deposit Token
+// [X Withdraw Token
+// [X] Check Balance
+// [X] Make order
+// [X] Cancel order
+// [ ] Fill order
+// [ ] Charge fees
+
 contract Exchange {
   using SafeMath for uint256;
 
@@ -17,6 +29,7 @@ contract Exchange {
   mapping(address => mapping(address => uint256)) public tokens;
   mapping(uint256 => _Order) public orders;
   mapping(uint256 => bool) public orderCancelled;
+  mapping(uint256 => bool) public orderFilled;
 
   event Deposit(address indexed token, address indexed user, uint256 amount, uint256 balance);
   event Withdraw(address indexed token, address indexed user, uint256 amount, uint256 balance);
@@ -36,6 +49,16 @@ contract Exchange {
     uint256 amountGet,
     address tokenGive,
     uint256 amountGive,
+    uint256 timestamp
+  );
+  event Trade (
+    uint256 id,
+    address user,
+    address tokenGet,
+    uint256 amountGet,
+    address tokenGive,
+    uint256 amountGive,
+    address userFill,
     uint256 timestamp
   );
 
@@ -134,6 +157,38 @@ contract Exchange {
       _order.tokenGive,
       _order.amountGive,
       _order.timestamp
+    );
+  }
+
+  function fillOrder(uint256 _orderId) public {
+    // TODO: fix it
+    require(_orderId > 0 && _orderId <= orderCount, "Cannot fill order that does not exist");
+    require(!orderCancelled[_orderId], "Cannot fill order that has been cancelled");
+    require(!orderFilled[_orderId], "Cannot fill order that has already been filled");
+    _trade(_orderId);
+    orderFilled[_orderId] = true;
+  }
+
+  function _trade(uint256 _orderId) internal {
+    _Order storage _order = orders[_orderId];
+
+    uint256 _feeAmount = _order.amountGet.mul(feePercent).div(100);
+
+    tokens[_order.tokenGet][msg.sender] = tokens[_order.tokenGet][_order.user].sub(_order.amountGet.add(_feeAmount));
+    tokens[_order.tokenGet][_order.user] = tokens[_order.tokenGet][_order.user].add(_order.amountGet);
+    tokens[_order.tokenGet][feeAccount] = tokens[_order.tokenGet][feeAccount].add(_feeAmount);
+    tokens[_order.tokenGive][_order.user] = tokens[_order.tokenGive][_order.user].sub(_order.amountGive);
+    tokens[_order.tokenGive][msg.sender] = tokens[_order.tokenGive][_order.user].add(_order.amountGive);
+
+    emit Trade(
+      _order.id,
+      _order.user,
+      _order.tokenGet,
+      _order.amountGet,
+      _order.tokenGive,
+      _order.amountGive,
+      msg.sender,
+      block.timestamp
     );
   }
 }
