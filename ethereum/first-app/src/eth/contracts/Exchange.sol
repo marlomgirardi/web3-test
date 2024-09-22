@@ -161,12 +161,13 @@ contract Exchange {
   }
 
   function fillOrder(uint256 _orderId) public {
+    _Order storage _order = orders[_orderId];
     // TODO: fix it
-    require(_orderId > 0 && _orderId <= orderCount, "Cannot fill order that does not exist");
-    require(!orderCancelled[_orderId], "Cannot fill order that has been cancelled");
-    require(!orderFilled[_orderId], "Cannot fill order that has already been filled");
-    _trade(_orderId);
-    orderFilled[_orderId] = true;
+    require(_order.id > 0 && _order.id <= orderCount, "Cannot fill order that does not exist");
+    require(!orderCancelled[_order.id], "Cannot fill order that has been cancelled");
+    require(!orderFilled[_order.id], "Cannot fill order that has already been filled");
+    _trade(_order.id);
+    orderFilled[_order.id] = true;
   }
 
   function _trade(uint256 _orderId) internal {
@@ -174,21 +175,21 @@ contract Exchange {
 
     uint256 _feeAmount = _order.amountGet.mul(feePercent).div(100);
 
-    tokens[_order.tokenGet][msg.sender] = tokens[_order.tokenGet][_order.user].sub(_order.amountGet.add(_feeAmount));
-    tokens[_order.tokenGet][_order.user] = tokens[_order.tokenGet][_order.user].add(_order.amountGet);
-    tokens[_order.tokenGet][feeAccount] = tokens[_order.tokenGet][feeAccount].add(_feeAmount);
-    tokens[_order.tokenGive][_order.user] = tokens[_order.tokenGive][_order.user].sub(_order.amountGive);
-    tokens[_order.tokenGive][msg.sender] = tokens[_order.tokenGive][_order.user].add(_order.amountGive);
+    // tokens[_order.tokenGet][msg.sender] = tokens[_order.tokenGet][_order.user].sub(_order.amountGet.add(_feeAmount));
+    // tokens[_order.tokenGet][_order.user] = tokens[_order.tokenGet][_order.user].add(_order.amountGet);
+    // tokens[_order.tokenGet][feeAccount] = tokens[_order.tokenGet][feeAccount].add(_feeAmount);
+    // tokens[_order.tokenGive][_order.user] = tokens[_order.tokenGive][_order.user].sub(_order.amountGive);
+    // tokens[_order.tokenGive][msg.sender] = tokens[_order.tokenGive][_order.user].add(_order.amountGive);
 
-    emit Trade(
-      _order.id,
-      _order.user,
-      _order.tokenGet,
-      _order.amountGet,
-      _order.tokenGive,
-      _order.amountGive,
-      msg.sender,
-      block.timestamp
-    );
+    // emit Trade(
+    //   _order.id,
+    //   _order.user,
+    //   _order.tokenGet,
+    //   _order.amountGet,
+    //   _order.tokenGive,
+    //   _order.amountGive,
+    //   msg.sender,
+    //   block.timestamp
+    // );
   }
 }
